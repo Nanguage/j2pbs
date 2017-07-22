@@ -1,0 +1,2 @@
+class JsonSynaticError(SyntaxError):
+    pass
