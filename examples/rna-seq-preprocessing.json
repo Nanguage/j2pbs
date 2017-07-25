@@ -1,0 +1,34 @@
+{
+    "name": "rna-seq-preprocessing",
+    "dir": "$HOME/rnaseq",
+
+    "jobs": 
+    [
+        {
+            "id": 0,
+            "name": "fastqc", 
+            "resources": { "nodes": 1, "ppn": 1 },
+
+            "commands": 
+            [
+                "fastqc 1_R1.fq.gz",
+                "fastqc 1_R2.fq.gz",
+                "mkdir qc_reports",
+                "mv *.html *.zip qc_reports"
+            ]
+        },
+
+
+        {
+            "id": 1,
+            "name": "trimming",
+            "resources": { "nodes" : 1, "ppn": 2 },
+
+            "command": "java -jar $trimmomatic -threads 2 -phred33 1_R1.fq.gz 1_R2.fq.gz 1_R1.clean.fq.gz 1_R1.unpair.fq.gz 1_R2.clean.fq.gz 1_R2.unpair.fq.gz ILLUMINACLIP:adapters.txt:3:30:5 MINLEN:100",
+
+            "dependent": 0
+        }
+
+    ]
+}
+
