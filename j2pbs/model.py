@@ -2,8 +2,10 @@ import os
 import uuid
 import shlex
 
-from .utils import upper_dict_key, lower_dict_key
-from .utils import fuzzy_get
+from .json_utils import upper_dict_key, lower_dict_key
+from .json_utils import extract_dir, extract_queue, extract_resources, extract_scope
+from .json_utils import extract_commands, extract_dependent
+from .json_utils import extract_jobs
 from .exceptions import ConfFileSyntaxError, VariableKeyError, GraphLoopDependent, RepeatJobNameOrId
 
 SHELL_SCOPE = os.environ
@@ -37,6 +39,7 @@ class Job:
 
 
     """
+    # defaults
     RESOURCES = { 'nodes': 1, 'ppn': 1 }
     QUEUE = 'batch'
     DIR   = SHELL_SCOPE['HOME']
@@ -54,14 +57,14 @@ class Job:
         except KeyError:
             raise ConfFileSyntaxError("Job node must contain ID and NAME fields.")
 
-        self.dir       = self.extract_dir(job_dict, self.DIR)
-        self.queue     = self.extract_queue(job_dict, self.QUEUE)
-        self.commands  = self.extract_commands(job_dict)
-        self.resources = self.extract_resources(job_dict, self.RESOURCES)
-        self.dependent = self.extract_dependent(job_dict)
+        self.dir       = extract_dir(job_dict, self.DIR)
+        self.queue     = extract_queue(job_dict, self.QUEUE)
+        self.commands  = extract_commands(job_dict)
+        self.resources = extract_resources(job_dict, self.RESOURCES)
+        self.dependent = extract_dependent(job_dict)
 
         # construct scopes
-        self.local_scope = self.extract_local_scope(job_dict)
+        self.local_scope = extract_scope(job_dict)
         self.global_scope = global_scope
 
         shell = job_dict.get('SHELL', self.SHELL)
@@ -79,50 +82,6 @@ class Job:
 
         if var_sub: # variable subsititute
             self.var_sub()
-
-    @staticmethod
-    def extract_dir(job_dict, default_dir):
-        aliases = ('DIR', 'DIRECTORY', 'FLODER', 'PATH')
-        _dir = fuzzy_get(job_dict, aliases, default_dir)
-        return _dir
-
-    @staticmethod
-    def extract_queue(job_dict, default_queue):
-        aliases = ('QUEUE', 'Q')
-        queue = fuzzy_get(job_dict, aliases, default_queue)
-        return queue
-
-    @staticmethod
-    def extract_commands(job_dict):
-        aliases = ('CMD', 'CMDS', 'COMMAND', 'COMMANDS')
-        commands = fuzzy_get(job_dict, aliases, [])
-        if type(commands) is not list:
-            commands = [commands]
-        if commands == []:
-            raise ConfFileSyntaxError("Job node must contain no empty COMMAND or COMMANDS field.")
-        return commands
-    
-    @staticmethod
-    def extract_resources(job_dict, default_resources):
-        aliases = ('RES', 'RESOURCES', 'RESOURCE')
-        resources = fuzzy_get(job_dict, aliases, default_resources)
-        return resources
-
-    @staticmethod
-    def extract_dependent(job_dict):
-        aliases = ('DEPEND', 'DEPENDENT', 'DEPENDENCE', 'DEPENDENCES')
-        dependent = fuzzy_get(job_dict, aliases, [])
-        if type(dependent) is not list:
-            dependent = [dependent]
-        return dependent
-
-    @staticmethod
-    def extract_local_scope(job_dict):
-        aliases = ('VAR', 'VARS', 'VARIABLE')
-        local_scope = fuzzy_get(job_dict, aliases, {})
-        if type(local_scope) != dict:
-            raise ConfFileSyntaxError("VAR is must a object/dict.")
-        return local_scope
 
     def to_script(self):
         """
@@ -200,20 +159,10 @@ class Graph:
             name = uuid.uuid4().hex[:8] # default name is an unique id
         self.name = name
 
-        self.jobs = self.extract_jobs(graph_dict)
+        self.jobs = extract_jobs(graph_dict)
         self.init_jobs() # init job objects
         self.check_jobs()
         self.parse_dependent()
-
-    @staticmethod
-    def extract_jobs(graph_dict):
-        aliases = ("JOB", "JOBS", "NODES")
-        jobs = fuzzy_get(graph_dict, aliases, [])
-        if type(jobs) != list:
-            jobs = [jobs]
-        if jobs == []:
-            raise ConfFileSyntaxError("Graph at least contain one job.")
-        return jobs
 
     def init_jobs(self):
         """ init jobs, convert json dicts to Job object. """
