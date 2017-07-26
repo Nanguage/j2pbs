@@ -42,6 +42,13 @@ class Job:
            'SHELL' control use it or not in default condition.
         2. priority of variables: LOCAL > GLOBAL > SHELL
 
+    Init a Job:
+    >>> js_dict = json.loads(json_str)
+    >>> job = Job(js_dict)
+
+    convert it to pbs script:
+    >>> print(job.pbs_script)
+    ...
 
     """
 
@@ -87,7 +94,8 @@ class Job:
         if var_sub: # variable subsititute
             self.var_sub()
 
-    def to_script(self):
+    @property
+    def pbs_script(self):
         """ Convert to pbs script string. """
         header_name = "#PBS -N {}".format(self.name)
         header_queue = "#PBS -q {}".format(self.queue)
@@ -146,12 +154,26 @@ class Job:
             self.commands[i] = subed
 
     def __str__(self):
-        return self.to_script()
+        return self.pbs_script
 
 
 class Graph:
     """
     The abstraction of pbs jobs relationship graph. 
+    Convert the json dict to the control script,
+    according to the dependent relationship between jobs.
+
+    In the same time it also provide the global varibles scope, 
+    and the default settings for Jobs.
+
+    Init graph with a json dict:
+    >>> js_dict = json.loads(json_str)
+    >>> g = Graph(js_dict)
+
+    get the control scipt converted from Graph:
+    >>> print(g.control_script)
+    ...
+
     """
 
     def __init__(self, graph_dict):
@@ -216,7 +238,7 @@ class Graph:
         id2script = {}
         for job in self.jobs:
             id_ = job.id
-            script = job.to_script()
+            script = job.pbs_script
             id2script[id_] = script
         return id2script
 
@@ -259,8 +281,18 @@ class Graph:
         ctrl_scr += (shebang + "\n\n")
 
         def job_assign_state(job):
-            """ return an bash assignment statement, store job script to a variable. """
-            state = "{}_SCR=$(cat <<'EOF'\n{}\nEOF\n)".format(job.name.upper(), job.to_script())
+            """ 
+            return an bash assignment statement, store job script to a variable. 
+            like:
+                JOB2_SCR=$(cat <<'EOF'
+                    #PBS -N job2 
+                    #PBS -l nodes=1:ppn=1
+
+                    echo "Hello!"
+                EOF
+                )
+            """
+            state = "{}_SCR=$(cat <<'EOF'\n{}\nEOF\n)".format(job.name.upper(), job.pbs_script)
             return state
                     
 
@@ -276,7 +308,11 @@ class Graph:
             return all([status[j] for j in self.dependent[job]])
 
         def qsub_and_fetch_state(job, depend_type="afterok"):
-            """ Return an statement, submit the job and fetch job id. """
+            """ 
+            Return an statement, submit the job and fetch job id,
+            like:
+                "JOB2_ID=$(echo "$JOB2_SCR" | qsub -w afterok:$JOB1_ID)"
+            """
             dependent_jobs = self.dependent[job]
             if dependent_jobs == []:
                 state = "{}_ID=$(echo \"${}_SCR\" | qsub)".format(
@@ -303,3 +339,6 @@ class Graph:
                 raise GraphLoopDependent()
 
         return ctrl_scr
+
+    def __str__(self):
+        return self.control_script

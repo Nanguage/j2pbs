@@ -20,7 +20,7 @@ def print_job(job):
                 job.dependent,
             )
        )
-    print("\"\"\"\n{}\n\"\"\"".format(job.to_script()))
+    print("\"\"\"\n{}\n\"\"\"".format(job.pbs_script))
 
 
 if __name__ == "__main__":
