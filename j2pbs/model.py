@@ -8,13 +8,18 @@ from .json_utils import extract_commands, extract_dependent
 from .json_utils import extract_jobs
 from .exceptions import ConfFileSyntaxError, VariableKeyError, GraphLoopDependent, RepeatJobNameOrId
 
+# defaults
 SHELL_SCOPE = os.environ
+RESOURCES = {'nodes': 1, 'ppn': 1}
+QUEUE = 'batch'
+DIR   = "$PWD"
+SHELL = False
 
 class Job:
     """
     The abstraction of one PBS job.
 
-    supported PBS features:
+    Supported PBS features:
 
         | id:    (int) job identifier
         | name:  (str) 
@@ -30,24 +35,23 @@ class Job:
         Not all, just some PBS features common use. :( 
         "id" is virtual id, for specify dependence relationship.
 
-    class variable like RESOURCES, QUEUE ... control the job default parameters. 
+    Class variable like RESOURCES, QUEUE ... control the job default parameters. 
 
-    points about variable support implemention:
+    Points about variable support implemention:
         1. supported the shell variable, 
            'SHELL' control use it or not in default condition.
         2. priority of variables: LOCAL > GLOBAL > SHELL
 
 
     """
-    # defaults
-    RESOURCES = { 'nodes': 1, 'ppn': 1 }
-    QUEUE = 'batch'
-    DIR   = SHELL_SCOPE['HOME']
-    SHELL = False
 
     def __init__(self, job_dict, 
                  var_sub=True,
-                 global_scope={}):
+                 global_scope={},
+                 default_dir=DIR,
+                 default_queue=QUEUE,
+                 default_resources=RESOURCES,
+                 default_shell=SHELL):
         job_dict = upper_dict_key(job_dict) # upper case all keys
 
         # extract ID and NAME
@@ -57,17 +61,17 @@ class Job:
         except KeyError:
             raise ConfFileSyntaxError("Job node must contain ID and NAME fields.")
 
-        self.dir       = extract_dir(job_dict, self.DIR)
-        self.queue     = extract_queue(job_dict, self.QUEUE)
+        self.dir       = extract_dir(job_dict, default_dir)
+        self.queue     = extract_queue(job_dict, default_queue)
         self.commands  = extract_commands(job_dict)
-        self.resources = extract_resources(job_dict, self.RESOURCES)
+        self.resources = extract_resources(job_dict, default_resources)
         self.dependent = extract_dependent(job_dict)
 
         # construct scopes
         self.local_scope = extract_scope(job_dict)
         self.global_scope = global_scope
 
-        shell = job_dict.get('SHELL', self.SHELL)
+        shell = job_dict.get('SHELL', default_shell)
         if shell == 0: # 0 count as False
             shell = False
         elif type(shell) == str: 
@@ -77,16 +81,14 @@ class Job:
         self.scope = {}
         if shell: 
             self.scope.update(SHELL_SCOPE) # priority: shell < global < local
-        self.scope.update()
+        self.scope.update(self.global_scope)
         self.scope.update(self.local_scope)
 
         if var_sub: # variable subsititute
             self.var_sub()
 
     def to_script(self):
-        """
-        convert to pbs script string.
-        """
+        """ Convert to pbs script string. """
         header_name = "#PBS -N {}".format(self.name)
         header_queue = "#PBS -q {}".format(self.queue)
         header_dir = "#PBS -d {}".format(self.dir)
@@ -118,7 +120,7 @@ class Job:
 
     def var_sub(self, scope=None, var_sign='$', escape="^"):
         """
-        variable substitution, 
+        Variable substitution, 
         substitute commands's variable token with variables in scope.
 
         :scope: variables used to subsititute command. [self.scope]
@@ -151,6 +153,7 @@ class Graph:
     """
     The abstraction of pbs jobs relationship graph. 
     """
+
     def __init__(self, graph_dict):
         graph_dict = upper_dict_key(graph_dict)
 
@@ -158,6 +161,14 @@ class Graph:
         if not name:
             name = uuid.uuid4().hex[:8] # default name is an unique id
         self.name = name
+
+        # extract job default properties
+        self.job_default_dir = extract_dir(graph_dict, None) or DIR
+        self.job_default_queue = extract_queue(graph_dict, None) or QUEUE
+        self.job_default_resources = extract_resources(graph_dict, None) or RESOURCES
+        self.job_default_shell = graph_dict.get('SHELL', None) or SHELL
+        # extract graph scopy(job global scopy)
+        self.scope = extract_scope(graph_dict)
 
         self.jobs = extract_jobs(graph_dict)
         self.init_jobs() # init job objects
@@ -167,10 +178,16 @@ class Graph:
     def init_jobs(self):
         """ init jobs, convert json dicts to Job object. """
         for i, js_dict in enumerate(self.jobs):
-            self.jobs[i] = Job(js_dict)
+            self.jobs[i] = Job(
+                    js_dict,
+                    global_scope=self.scope,
+                    default_dir=self.job_default_dir,
+                    default_queue=self.job_default_queue,
+                    default_resources=self.job_default_resources,
+                    default_shell=self.job_default_shell)
 
     def parse_dependent(self):
-        """ fetch all jobs dependent store in self.dependent """
+        """ Fetch all jobs dependent store in self.dependent. """
         id2job = {job.id:job for job in self.jobs}
         self.dependent = {}
         for job in self.jobs:
@@ -193,7 +210,7 @@ class Graph:
     @property
     def job_scripts(self):
         """ 
-        convert jobs to scripts,
+        Convert jobs to scripts,
         return a dict mapping job id to script
         """
         id2script = {}
@@ -206,10 +223,10 @@ class Graph:
     @property
     def control_script(self):
         """ 
-        create a script control all jobs,
+        Create a script control all jobs,
         ensure them run according the dependent relation ship. 
         
-        the control script will look like this:
+        The control script will look like this:
         
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #!/bin/bash
@@ -255,11 +272,11 @@ class Graph:
         status = {job: False for job in self.jobs} # status indicate it is converted or not
 
         def is_solved(job):
-            """ the dependent of job is solved or not. """
+            """ The dependent of job is solved or not. """
             return all([status[j] for j in self.dependent[job]])
 
         def qsub_and_fetch_state(job, depend_type="afterok"):
-            """ return an statement, submit the job and fetch job id. """
+            """ Return an statement, submit the job and fetch job id. """
             dependent_jobs = self.dependent[job]
             if dependent_jobs == []:
                 state = "{}_ID=$(echo \"${}_SCR\" | qsub)".format(

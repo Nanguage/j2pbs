@@ -105,3 +105,41 @@ if __name__ == "__main__":
     print(g1.control_script)
     print(file_spliter)
     print()
+
+    # test global var
+    js_str = """
+    {
+        "name": "test",
+        "var": {"me":"alice", "you":"bob"},
+        "jobs": 
+        [
+            {"id":0, "name":"test1", "cmd":"echo hello $you"},
+            {"id":1, "name":"test2", "cmd":"echo hello $me", "depend": 0}
+        ]
+    }
+    """
+    g2 = get_graph(js_str) 
+    print(file_spliter)
+    print(g2.control_script)
+    print(file_spliter)
+    print()
+
+    # test control job default setting
+    js_str = """
+    {
+        "name": "test",
+        "queue": "big",
+        "dir": "/home/nanguage/pbstmp",
+        "resources": {"nodes":1, "ppn":2},
+        "jobs": 
+        [
+            {"id":0, "name":"test1", "cmd":"sleep 10"},
+            {"id":1, "name":"test2", "cmd":"echo hello", "depend": 0}
+        ]
+    }
+    """
+    g3 = get_graph(js_str) 
+    print(file_spliter)
+    print(g3.control_script)
+    print(file_spliter)
+    print()

@@ -134,12 +134,12 @@ if __name__ == "__main__":
         "name": "test",
         "shell": true,
         "var": { "name": "alice" },
-        "cmd": ["echo $HOME", "echo hello $name"]
+        "cmd": ["echo ^$HOME", "echo hello $name"]
     }
     """
-    Job.RESOURCES = {'nodes':1, 'ppn':2}
+    default_resources = {'nodes':1, 'ppn':2}
     job_dict = json.loads(job_json)
-    job = Job(job_dict)
+    job = Job(job_dict, default_resources=default_resources)
     assert job.resources['nodes'] == 1
     assert job.resources['ppn'] == 2
     print_job(job)
