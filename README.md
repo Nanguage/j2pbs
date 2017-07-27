@@ -1,6 +1,20 @@
-# j2pbs ---- Write pbs jobs in json format.
+# j2pbs ---- Write pbs jobs in JSON format.
+
+
+[JSON](http://www.json.org/) is a simple and readble file format
+for data transfer and configuration.
+What if we using it organize our 
+PBS([Portable Batch System](https://en.wikipedia.org/wiki/Portable_Batch_System)) jobs?
+Maybe this will make it easier to submit and manage our PBS jobs.
+j2pbs is a python package and command line tools help you doing such things.
+
 
 ## Example:
+
+A simple example:
+```
+
+```
 
 
 ## TODO LIST
