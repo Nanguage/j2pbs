@@ -6,7 +6,8 @@ from .json_utils import upper_dict_key, lower_dict_key
 from .json_utils import extract_dir, extract_queue, extract_resources, extract_scope
 from .json_utils import extract_commands, extract_dependent
 from .json_utils import extract_jobs
-from .exceptions import ConfFileSyntaxError, VariableKeyError, GraphLoopDependent, RepeatJobNameOrId
+from .exceptions import ConfFileSyntaxError, GraphLoopDependent, RepeatJobNameOrId
+from .semantic import var_sub
 
 # defaults
 SHELL_SCOPE = os.environ
@@ -53,7 +54,7 @@ class Job:
     """
 
     def __init__(self, job_dict, 
-                 var_sub=True,
+                 cmd_sub=True,
                  global_scope={},
                  default_dir=DIR,
                  default_queue=QUEUE,
@@ -65,6 +66,7 @@ class Job:
         try:
             self.id = job_dict['ID']
             self.name = job_dict['NAME']
+            self.name = self.name.replace(" ", "_") # replace space with under score.
         except KeyError:
             raise ConfFileSyntaxError("Job node must contain ID and NAME fields.")
 
@@ -91,8 +93,9 @@ class Job:
         self.scope.update(self.global_scope)
         self.scope.update(self.local_scope)
 
-        if var_sub: # variable subsititute
-            self.var_sub()
+        if cmd_sub: # variable subsititute
+            self.cmd_sub()
+        self.dir_sub()
 
     @property
     def pbs_script(self):
@@ -126,32 +129,30 @@ class Job:
 
         return script
 
-    def var_sub(self, scope=None, var_sign='$', escape="^"):
+    def cmd_sub(self, scope=None, comment="*"):
         """
         Variable substitution, 
         substitute commands's variable token with variables in scope.
-
-        :scope: variables used to subsititute command. [self.scope]
-        :var_sign: the start char of a variable. ['$']
-        :escape: the escape char. ['\\']
-
         """
         if not scope:
             scope = self.scope
         for i, cmd in enumerate(self.commands):
-            args = shlex.split(cmd, comments="#") # split command to arguments
-            for j, arg in enumerate(args):
-                if arg.startswith(escape):
-                    args[j] = arg[1:]
-                    continue
-                if arg.startswith(var_sign): # this argument is a variable
-                    var_key = arg[1:]
-                    if var_key not in scope:
-                        raise VariableKeyError("Variable {} not found.".format(var_key))
-                    var = scope[var_key]
-                    args[j] = var
-            subed = " ".join(args)
+            args = shlex.split(cmd, comments=comment) # split command to arguments
+            subed_args = var_sub(args, scope, var_sign='$', escape="^")
+            subed = " ".join(subed_args)
             self.commands[i] = subed
+
+    def dir_sub(self):
+        """
+        Do variable substitution in 'dir' with shell scope and self scope.
+        priority: self.scope > shell scope
+        """
+        scope = {}
+        scope.update(SHELL_SCOPE)
+        scope.update(self.scope)
+        args = [self.dir]
+        subed_args = var_sub(args, scope, var_sign='$', escape="^")
+        self.dir = subed_args[0] 
 
     def __str__(self):
         return self.pbs_script
