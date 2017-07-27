@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import json
 
 from j2pbs.model import Job

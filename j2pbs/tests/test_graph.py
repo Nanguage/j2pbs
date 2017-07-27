@@ -143,3 +143,46 @@ if __name__ == "__main__":
     print(g3.control_script)
     print(file_spliter)
     print()
+
+    # test dir sub
+    js_str = """
+    {
+        "name": "test",
+        "queue": "big",
+        "dir": "$HOME/pbstmp",
+        "resources": {"nodes":1, "ppn":2},
+        "jobs": 
+        [
+            {"id":0, "name":"test1", "cmd":"sleep 10"},
+            {"id":1, "name":"test2", "cmd":"echo hello", "depend": 0}
+        ]
+    }
+    """
+    g4 = get_graph(js_str) 
+    print(file_spliter)
+    print(g4.control_script)
+    print(file_spliter)
+    print()
+
+    js_str = """
+    {
+        "name": "test",
+        "queue": "big",
+        "dir": "$myhome/pbstmp",
+        "resources": {"nodes":1, "ppn":2},
+        "var":
+        {
+            "myhome": "/home/nanguage/PlayGround"
+        },
+        "jobs": 
+        [
+            {"id":0, "name":"test1", "cmd":"sleep 10"},
+            {"id":1, "name":"test2", "cmd":"echo hello", "depend": 0}
+        ]
+    }
+    """
+    g5 = get_graph(js_str) 
+    print(file_spliter)
+    print(g5.control_script)
+    print(file_spliter)
+    print()
