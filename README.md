@@ -11,14 +11,38 @@ j2pbs is a python package and command line tools help you doing such things.
 
 ## Example:
 
-A simple example:
+Firstly, we begin with a very simple example:
+
+Here, we want submit two job, the first job is just `sleep 10` seconds,
+and the second one just `echo Hi!`,
+the second job is depend on the first,
+it means that the second job begin to run when the first job terminate normally.
+We can express these two jobs like following json file:
+```
+{
+    "name": "simple example",
+    "jobs": 
+     [
+        { "id": 0, "name": "job1", "cmd": "sleep 10" },
+        { "id": 1, "name": "job2", "cmd": "echo Hi!", "depend": 0 }
+     ]
+}
 ```
 
+Assume we store this in the file "simple.json".
+Next, we can submit these jobs using the command line interface:
+```
+$ python -m j2pbs submit simple.json
+```
+Actually, we can break this down to two single steps, it has same effect:
+```
+$ # first convert the json config file to one control bash script.
+$ python -m j2pbs convert simple.json simple.sh
+$ # then run the control script
+$ bash simple.sh
 ```
 
-
-## TODO LIST
-
+## Features:
 ### 1. variables suport
 #### 1.1 Job level variables
 For example:

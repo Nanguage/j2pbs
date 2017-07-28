@@ -1,0 +1,8 @@
+__title__ = 'j2pbs'
+__version__ = '0.1.0'
+__author__ = 'Nanguage'
+__author_email__ = 'nanguage@yahoo.com'
+__url__ = 'https://github.com/Nanguage/j2pbs'
+__license__ = 'Apache 2.0'
+__description__ = 'Submit PBS jobs with json file format.'
+__keywords__ = 'json pbs'

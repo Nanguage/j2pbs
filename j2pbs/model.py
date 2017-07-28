@@ -255,18 +255,15 @@ class Graph:
         #!/bin/bash
 
         JOB1_SCR=$(cat <<'EOF'
-            #PBS -N job1
-            #PBS -l nodes=1:ppn=1
-
-            sleep 10
+        #PBS -N job1
+        #PBS -l nodes=1:ppn=1
+        sleep 10
         EOF
         )
-
         JOB2_SCR=$(cat <<'EOF'
-            #PBS -N job2 
-            #PBS -l nodes=1:ppn=1
-
-            echo "Hello!"
+        #PBS -N job2 
+        #PBS -l nodes=1:ppn=1
+        echo "Hello!"
         EOF
         )
 
