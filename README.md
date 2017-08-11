@@ -8,6 +8,10 @@ PBS([Portable Batch System](https://en.wikipedia.org/wiki/Portable_Batch_System)
 Maybe this will make it easier to submit and manage our PBS jobs.
 j2pbs is a python package and command line tools help you doing such things.
 
+## Installation
+```
+pip install j2pbs
+```
 
 ## Example:
 
