@@ -9,8 +9,8 @@ about = {}
 with open(os.path.join(here, 'j2pbs', '__version__.py'), 'r', 'utf-8') as f:
     exec(f.read(), about)
 
-with open('README.md', 'r', 'utf-8') as f:
-    readme = f.read()
+#with open('README.md', 'r', 'utf-8') as f:
+#    readme = f.read()
 
 requires = []
 
@@ -19,7 +19,7 @@ setup(
     version=about['__version__'],
     keywords=about['__keywords__'],
     description=about['__description__'],
-    long_description=readme,
+#    long_description=readme,
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
