@@ -2,7 +2,7 @@ j2pbs ---- Write pbs jobs in JSON format.
 =========================================
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
-[![PYPI](https://img.shields.io/badge/pypi-v0.1.1-blue.svg)](https://pypi.python.org/pypi/j2pbs/0.1.1)
+[![PYPI](https://img.shields.io/badge/pypi-v0.1.2-blue.svg)](https://pypi.python.org/pypi/j2pbs/0.1.2)
 ![Python Version](https://img.shields.io/badge/python-2.7%2C%203.5%2C%203.6-blue.svg)
 
 
