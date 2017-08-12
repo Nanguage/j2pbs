@@ -1,6 +1,7 @@
 {
     "name": "rna-seq-preprocessing",
-    "dir": "$HOME/rnaseq",
+    "dir": "$HOME/example-rnaseq",
+    "shell": true,
     "resources": { "nodes": 1, "ppn": 1 },
     "var":{
         "trimm": "java -jar $HOME/S/Bioinfo/Trimmomatic-0.36/trimmomatic-0.36.jar",
@@ -9,17 +10,32 @@
 
     "jobs": 
     [
-        { "id": 0, "name": "fastqc_R1", "cmd": "$fastqc 1_R1.fq.gz" },
-        { "id": 1, "name": "fastqc_R2", "cmd": "$fastqc 1_R2.fq.gz" },
-
         {
-            "id": 2, "name": "trimming",
+            "id": 0, "name": "trimming_1",
             "resources": { "nodes" : 1, "ppn": 2 },
-            "command": "$trimm -threads 2 -phred33 1_R1.fq.gz 1_R2.fq.gz 1_R1.clean.fq.gz 1_R1.unpair.fq.gz 1_R2.clean.fq.gz 1_R2.unpair.fq.gz ILLUMINACLIP:adapters.txt:3:30:5 MINLEN:100",
-            "dependent": [0, 1]
+            "cmd": "$trimm -threads 2 -phred33 1_R1.fq.gz 1_R2.fq.gz 1_R1.clean.fq.gz 1_R1.unpair.fq.gz 1_R2.clean.fq.gz 1_R2.unpair.fq.gz ILLUMINACLIP:adapters.txt:3:30:5 MINLEN:100"
         },
 
-        { "id": 3, "name": "packing", "cmd": "tar -zcvf result.tar.gz ./*.clean.fq.gz *.html", "depend": 2 }
+        {
+            "id": 1, "name": "trimming_2",
+            "resources": { "nodes" : 1, "ppn": 2 },
+            "cmd": "$trimm -threads 2 -phred33 2_R1.fq.gz 2_R2.fq.gz 2_R1.clean.fq.gz 2_R1.unpair.fq.gz 2_R2.clean.fq.gz 2_R2.unpair.fq.gz ILLUMINACLIP:adapters.txt:3:30:5 MINLEN:100"
+        },
+
+        { "id": 2, "name": "fastqc_1_R1", "cmd": "$fastqc 1_R1.clean.fq.gz", "depend": 0 },
+        { "id": 3, "name": "fastqc_1_R2", "cmd": "$fastqc 1_R2.clean.fq.gz", "depend": 0 },
+        { "id": 4, "name": "fastqc_2_R1", "cmd": "$fastqc 2_R1.clean.fq.gz", "depend": 1 },
+        { "id": 5, "name": "fastqc_2_R2", "cmd": "$fastqc 2_R2.clean.fq.gz", "depend": 1 },
+
+
+        {
+            "id": 6, "name": "packing_qc_reports",
+            "cmd": [
+                "mkdir qc_report",
+                "cd qc_report",
+                "tar -zcvf result.tar.gz ./*.clean.fq.gz *.html"
+            ],
+            "depend": [2, 3, 4, 5]
+        }
     ]
 }
-

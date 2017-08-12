@@ -1,0 +1,9 @@
+{
+    "name": "loop-example",
+    "jobs": 
+    [
+        {"id":0, "name":"a", "cmd":"echo a", "depend": 2},
+        {"id":1, "name":"b", "cmd":"echo b", "depend": 0},
+        {"id":2, "name":"c", "cmd":"echo c", "depend": 1}
+    ]
+}

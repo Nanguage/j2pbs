@@ -1,0 +1,23 @@
+digraph {
+
+    rankdir="LR";
+
+    t1 [label="trimming sample1"];
+    t2 [label="trimming sample2"];
+    q1 [label="fastqc 1_R1"];
+    q2 [label="fastqc 1_R2"];
+    q3 [label="fastqc 2_R1"];
+    q4 [label="fastqc 2_R2"];
+    p1 [label="packing qc report"];
+
+    t1 -> q1;
+    t1 -> q2;
+    t2 -> q3;
+    t2 -> q4;
+    
+    q1 -> p1;
+    q2 -> p1;
+    q3 -> p1;
+    q4 -> p1;
+}
+

@@ -1,0 +1,14 @@
+digraph {
+
+    rankdir="LR"
+
+    A [label="A"];
+    B [label="B"];
+    C [label="C"];
+
+    A -> B;
+    B -> C;
+    C -> A;
+
+}
+

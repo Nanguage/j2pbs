@@ -1,0 +1,9 @@
+digraph {
+
+    rankdir="LR";
+
+    Job1 [label="job1"];
+    Job2 [label="job2"];
+
+    Job1 -> Job2;
+}

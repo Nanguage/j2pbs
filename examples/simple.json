@@ -1,0 +1,8 @@
+{
+    "name": "simple example",
+    "jobs":
+     [
+        { "id": 0, "name": "job1", "cmd": "sleep 10" },
+        { "id": 1, "name": "job2", "cmd": "echo Hi!", "depend": 0 }
+     ]
+}

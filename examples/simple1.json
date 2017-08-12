@@ -1,9 +1,0 @@
-{
-    "name": "simple-test1",
-    "dir": "$HOME/PlayGround",
-    "jobs": 
-    [
-        {"id":0, "name":"sleep 10", "cmd":"sleep 10"},
-        {"id":1, "name":"say hello", "cmd":"echo hello!"}
-    ]
-}
