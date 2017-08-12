@@ -15,4 +15,4 @@ def qsub(script_str):
 def run_bash(filename):
     """ run bash script. """
     cmd = "cat {} | bash".format(filename)
-    subp = subprocess.run(cmd, shell=True)
+    subp = subprocess.call(cmd, shell=True)
